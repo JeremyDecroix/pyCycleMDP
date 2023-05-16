@@ -7,11 +7,11 @@ import pycycle.api as pyc
 
 #from small_core_eff_balance import SmallCoreEffBalance
 
-from N3_Fan_map import FanMap
-from N3_LPC_map import LPCMap
-from N3_HPC_map import HPCMap
-from N3_HPT_map import HPTMap
-from N3_LPT_map import LPTMap
+from PW1133_Fan_map import FanMap
+from PW1133_LPC_map import LPCMap
+from PW1133_HPC_map import HPCMap
+from PW1133_HPT_map import HPTMap
+from PW1133_LPT_map import LPTMap
 
 
 class N3(pyc.Cycle):
