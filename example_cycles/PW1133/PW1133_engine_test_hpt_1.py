@@ -128,9 +128,9 @@ class N3(pyc.Cycle):
             self.connect('lp_shaft.pwr_net', 'balance.lhs:lpt_PR')
 
             # Finds High Pressure Turbine Pressure Ratio through a net power of zero (pwr_net) on the high pressure shaft (hp_shaft)
-            balance.add_balance('hpt_PR', val=3.964, lower=1.001, upper=8, eq_units='hp', rhs_val=0., res_ref=1e4)
-            self.connect('balance.hpt_PR', 'hpt.PR')
-            self.connect('hp_shaft.pwr_net', 'balance.lhs:hpt_PR')
+            #balance.add_balance('hpt_PR', val=3.964, lower=1.001, upper=8, eq_units='hp', rhs_val=0., res_ref=1e4)
+            #self.connect('balance.hpt_PR', 'hpt.PR')
+            #self.connect('hp_shaft.pwr_net', 'balance.lhs:hpt_PR')
 
             # Finds the base torque in the gearbox (gearbox.trq_base) that results in a net power of zero (pwr_net) on the fan shaft (fan_shaft)
             balance.add_balance('gb_trq', val=23928.0, units='ft*lbf', eq_units='hp', rhs_val=0., res_ref=1e4)
@@ -376,7 +376,7 @@ class MPN3(pyc.MPCycle):
 
         # CRZ POINT (DESIGN)
         self.pyc_add_pnt('CRZ', N3(), promotes_inputs=[('fan.PR', 'fan:PRdes'), ('lpc.PR', 'lpc:PRdes'), 
-                                                        ('opr_calc.FPR', 'fan:PRdes'), ('opr_calc.LPCPR', 'lpc:PRdes')])
+                                                        ('opr_calc.FPR', 'fan:PRdes'), ('opr_calc.LPCPR', 'lpc:PRdes'), ('hpt.PR', 'hpt:PRdes')])
 
         # POINT 1: Cruise (CRZ)
         self.set_input_defaults('CRZ.fc.alt', 35000., units='ft'),
@@ -387,6 +387,7 @@ class MPN3(pyc.MPCycle):
         self.set_input_defaults('CRZ.hpc.eff', 0.8819),
         self.set_input_defaults('CRZ.hpt.eff', 0.8900),
         self.set_input_defaults('CRZ.lpt.eff', 0.9110),
+        self.set_input_defaults('CRZ.hpt.PR', 3.964),
 
 
         self.set_input_defaults('CRZ.balance.rhs:fan_eff', 0.9286),
@@ -595,6 +596,7 @@ if __name__ == "__main__":
     # Set up the specific cycle parameters
     prob.set_val('fan:PRdes', 1.52),
     prob.set_val('lpc:PRdes', 2.246),
+    prob.set_val('hpt:PRdes', 3.964),
     prob.set_val('T4_ratio.TR', 0.926470588)
     prob.set_val('RTO_T4', 3380.0, units='degR')
     prob.set_val('SLS.balance.rhs:FAR', 33110 , units='lbf') 
@@ -605,7 +607,7 @@ if __name__ == "__main__":
 
     #prob['CRZ.balance.FAR'] = 0.02672
     prob['CRZ.balance.lpt_PR'] = 8.981
-    prob['CRZ.balance.hpt_PR'] = 3.964
+    #prob['CRZ.balance.hpt_PR'] = 3.964
     prob['CRZ.fc.balance.Pt'] = 5.166
     prob['CRZ.fc.balance.Tt'] = 441.74
 
@@ -615,7 +617,7 @@ if __name__ == "__main__":
     fan_Nmech_guess = [1557.6, 1550.2, 1617.0]
     lp_Nmech_guess = [4828.60, 4805.68 , 5012.74]
     hp_Nmech_guess = [14622.34, 14576.6, 13689.08]
-    hpt_PR_guess = [3.963, 3.965, 3.953]
+    #hpt_PR_guess = [3.963, 3.965, 3.953]
     lpt_PR_guess = [7.249, 7.114, 9.072]
     fan_Rline_guess = [1.6697, 1.5828, 2.3146]
     lpc_Rline_guess = [1.9402, 2.0043, 2.4761]
@@ -631,7 +633,7 @@ if __name__ == "__main__":
         prob[pt+'.balance.fan_Nmech'] = fan_Nmech_guess[i]
         prob[pt+'.balance.lp_Nmech'] = lp_Nmech_guess[i]
         prob[pt+'.balance.hp_Nmech'] = hp_Nmech_guess[i]
-        prob[pt+'.hpt.PR'] = hpt_PR_guess[i]
+        #prob[pt+'.hpt.PR'] = hpt_PR_guess[i]
         prob[pt+'.lpt.PR'] = lpt_PR_guess[i]
         prob[pt+'.fan.map.RlineMap'] = fan_Rline_guess[i]
         prob[pt+'.lpc.map.RlineMap'] = lpc_Rline_guess[i]
