@@ -44,7 +44,6 @@ class N3(pyc.Cycle):
         # Core Sections
         self.add_subsystem('fc', pyc.FlightConditions())
         self.add_subsystem('inlet', pyc.Inlet())
-        #self.add_subsystem('InletFlowControl', pyc.BleedOut(bleed_names=['FlowControlBld']))
         self.add_subsystem('fan', pyc.Compressor(map_data=FanMap, map_extrap=True,
                                                  bleed_names=[]),
                            promotes_inputs=[('Nmech','Fan_Nmech')])
@@ -52,7 +51,6 @@ class N3(pyc.Cycle):
         self.add_subsystem('duct4', pyc.Duct(expMN=2.0, ))
         self.add_subsystem('lpc', pyc.Compressor(map_data=LPCMap, map_extrap=True),
                             promotes_inputs=[('Nmech','LP_Nmech')])
-        #self.add_subsystem('bld25', pyc.BleedOut(bleed_names=['sbv']))
         self.add_subsystem('duct6', pyc.Duct(expMN=2.0, ))
         self.add_subsystem('hpc', pyc.Compressor(map_data=HPCMap, map_extrap=True,
                                         bleed_names=['cust','bld_inlet','bld_exit']),
@@ -62,7 +60,6 @@ class N3(pyc.Cycle):
         self.add_subsystem('hpt', pyc.Turbine(map_data=HPTMap, map_extrap=True,
                                               bleed_names=['bld_inlet','bld_exit']),
                            promotes_inputs=[('Nmech','HP_Nmech')])
-        #self.add_subsystem('ATD_Bleed', pyc.BleedOut(bleed_names=['ATDbleed'])) #new component
         self.add_subsystem('duct11', pyc.Duct(expMN=2.0, ))
         self.add_subsystem('lpt', pyc.Turbine(map_data=LPTMap, map_extrap=True,
                                               bleed_names=['bld_inlet','bld_exit']),
@@ -73,7 +70,6 @@ class N3(pyc.Cycle):
         # Bypass Sections
         self.add_subsystem('byp_bld', pyc.BleedOut(bleed_names=['bypBld']))
         self.add_subsystem('duct15', pyc.Duct(expMN=2.0, ))
-        #self.add_subsystem('bld16', pyc.BleedOut(bleed_names=['bld_16'])) #new component
         self.add_subsystem('byp_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', ))
 
         # Shafts
@@ -170,21 +166,7 @@ class N3(pyc.Cycle):
             balance.add_balance('lpt_eff', val=0.8854 , units=None, eq_units=None)
             self.connect('balance.lpt_eff', 'lpt.eff')
             self.connect('lpt.eff_poly', 'balance.lhs:lpt_eff')
-            
-            #commented out
-            #self.add_subsystem('hpc_CS',
-                    #om.ExecComp('CS = Win *(power(Tout/518.67,0.5)/(Pout/14.696))',
-                            #Win= {'value': 5.0, 'units':'lbm/s'},
-                            #Tout={'value': 14.696, 'units':'degR'},
-                            #Pout={'value': 518.67, 'units':'psi'},
-                            #CS={'value': 5, 'units':'lbm/s'}))
-            #self.connect('duct25.Fl_O:stat:W', 'hpc_CS.Win')
-            #self.connect('hpc.Fl_O:tot:T', 'hpc_CS.Tout')
-            #self.connect('hpc.Fl_O:tot:P', 'hpc_CS.Pout')
-            #self.add_subsystem('hpc_EtaBalance', SmallCoreEffBalance(eng_type = 'large', tech_level = 0))
-            #self.connect('hpc_CS.CS','hpc_EtaBalance.CS')
-            #self.connect('hpc.eff_poly', 'hpc_EtaBalance.eta_p')
-            #self.connect('hpc_EtaBalance.eta_a', 'hpc.eff')
+
 
             self.add_subsystem('fan_dia', om.ExecComp('FanDia = 2.0*(area/(pi*(1.0-hub_tip**2.0)))**0.5',
                             area={'val':4689, 'units':'inch**2'},
@@ -263,8 +245,6 @@ class N3(pyc.Cycle):
             #self.connect('balance.hpt_chrg_cool_frac', 'bld3.bld_exit:frac_W')
             #self.connect('bld3.bld_exit:stat:W', 'balance.lhs:hpt_chrg_cool_frac')
             #self.connect('hpt_chargable.W_cool', 'balance.rhs:hpt_chrg_cool_frac')
-
-
 
             order_add = ['hpt_cooling', 'hpt_chargable']
 
@@ -394,51 +374,49 @@ class MPN3(pyc.MPCycle):
 
     def setup(self):
 
-        # TOC POINT (DESIGN)
-        self.pyc_add_pnt('TOC', N3(), promotes_inputs=[('fan.PR', 'fan:PRdes'), ('lpc.PR', 'lpc:PRdes'), 
+        # CRZ POINT (DESIGN)
+        self.pyc_add_pnt('CRZ', N3(), promotes_inputs=[('fan.PR', 'fan:PRdes'), ('lpc.PR', 'lpc:PRdes'), 
                                                         ('opr_calc.FPR', 'fan:PRdes'), ('opr_calc.LPCPR', 'lpc:PRdes')])
 
-        # POINT 1: Top-of-climb (TOC)
-        self.set_input_defaults('TOC.fc.alt', 35000., units='ft'),
-        self.set_input_defaults('TOC.fc.MN', 0.78),
-        self.set_input_defaults('TOC.inlet.ram_recovery', 0.999),
+        # POINT 1: Cruise (CRZ)
+        self.set_input_defaults('CRZ.fc.alt', 35000., units='ft'),
+        self.set_input_defaults('CRZ.fc.MN', 0.78),
+        self.set_input_defaults('CRZ.inlet.ram_recovery', 0.999),
 
-        self.set_input_defaults('TOC.burner.Fl_I:FAR', 0.02672),
-        self.set_input_defaults('TOC.hpc.eff', 0.8819),
+        self.set_input_defaults('CRZ.burner.Fl_I:FAR', 0.02672),
+        self.set_input_defaults('CRZ.hpc.eff', 0.8819),
 
-        self.set_input_defaults('TOC.balance.rhs:fan_eff', 0.9286),
-        self.set_input_defaults('TOC.duct4.dPqP', 0.0048),
-        self.set_input_defaults('TOC.balance.rhs:lpc_eff', 0.9150),
-        self.set_input_defaults('TOC.duct6.dPqP', 0.0101),
-        self.set_input_defaults('TOC.balance.rhs:hpt_eff', 0.8734),
-        self.set_input_defaults('TOC.duct11.dPqP', 0.0051),
-        self.set_input_defaults('TOC.balance.rhs:lpt_eff', 0.8854),
-        self.set_input_defaults('TOC.duct13.dPqP', 0.0107),
-        self.set_input_defaults('TOC.duct15.dPqP', 0.0136),
-        self.set_input_defaults('TOC.Fan_Nmech', 1559, units='rpm'),
-        self.set_input_defaults('TOC.LP_Nmech', 4833, units='rpm'),
-        self.set_input_defaults('TOC.HP_Nmech', 13500, units='rpm'),
+        self.set_input_defaults('CRZ.balance.rhs:fan_eff', 0.9286),
+        self.set_input_defaults('CRZ.duct4.dPqP', 0.0048),
+        self.set_input_defaults('CRZ.balance.rhs:lpc_eff', 0.9150),
+        self.set_input_defaults('CRZ.duct6.dPqP', 0.0101),
+        self.set_input_defaults('CRZ.balance.rhs:hpt_eff', 0.8734),
+        self.set_input_defaults('CRZ.duct11.dPqP', 0.0051),
+        self.set_input_defaults('CRZ.balance.rhs:lpt_eff', 0.8854),
+        self.set_input_defaults('CRZ.duct13.dPqP', 0.0107),
+        self.set_input_defaults('CRZ.duct15.dPqP', 0.0136),
+        self.set_input_defaults('CRZ.Fan_Nmech', 1559, units='rpm'),
+        self.set_input_defaults('CRZ.LP_Nmech', 4833, units='rpm'),
+        self.set_input_defaults('CRZ.HP_Nmech', 13500, units='rpm'),
         
         # Air Stream Velocity
-        self.set_input_defaults('TOC.inlet.MN', 0.63),
-        self.set_input_defaults('TOC.fan.MN', 0.45)
-        self.set_input_defaults('TOC.splitter.MN1', 0.45)
-        self.set_input_defaults('TOC.splitter.MN2', 0.45)
-        self.set_input_defaults('TOC.duct4.MN', 0.4),
-        self.set_input_defaults('TOC.lpc.MN', 0.4),
-        #self.set_input_defaults('TOC.bld25.MN', 0.4),
-        self.set_input_defaults('TOC.duct6.MN', 0.4),
-        self.set_input_defaults('TOC.hpc.MN', 0.30),
-        self.set_input_defaults('TOC.bld3.MN', 0.30)
-        self.set_input_defaults('TOC.burner.MN', 0.10),
-        self.set_input_defaults('TOC.hpt.MN', 0.30),
-        #self.set_input_defaults('TOC.ATDbleed.MN', 0.30),
-        self.set_input_defaults('TOC.duct11.MN', 0.30),
-        self.set_input_defaults('TOC.lpt.MN', 0.35),
-        self.set_input_defaults('TOC.duct13.MN', 0.25),
-        self.set_input_defaults('TOC.byp_bld.MN', 0.45),
-        self.set_input_defaults('TOC.duct15.MN', 0.45),
-        #self.set_input_defaults('TOC.bld16.MN', 0.3),
+        self.set_input_defaults('CRZ.inlet.MN', 0.63),
+        self.set_input_defaults('CRZ.fan.MN', 0.45)
+        self.set_input_defaults('CRZ.splitter.MN1', 0.45)
+        self.set_input_defaults('CRZ.splitter.MN2', 0.45)
+        self.set_input_defaults('CRZ.duct4.MN', 0.4),
+        self.set_input_defaults('CRZ.lpc.MN', 0.4),
+        #self.set_input_defaults('CRZ.bld25.MN', 0.4),
+        self.set_input_defaults('CRZ.duct6.MN', 0.4),
+        self.set_input_defaults('CRZ.hpc.MN', 0.30),
+        self.set_input_defaults('CRZ.bld3.MN', 0.30)
+        self.set_input_defaults('CRZ.burner.MN', 0.10),
+        self.set_input_defaults('CRZ.hpt.MN', 0.30),
+        self.set_input_defaults('CRZ.duct11.MN', 0.30),
+        self.set_input_defaults('CRZ.lpt.MN', 0.35),
+        self.set_input_defaults('CRZ.duct13.MN', 0.25),
+        self.set_input_defaults('CRZ.byp_bld.MN', 0.45),
+        self.set_input_defaults('CRZ.duct15.MN', 0.45),
 
         # Bleed Mass Flow, Pressure Drop, Work Fraction
         self.pyc_add_cycle_param('burner.dPqP', 0.025),
@@ -446,7 +424,6 @@ class MPN3(pyc.MPCycle):
         self.pyc_add_cycle_param('byp_nozz.Cv', 0.9999),
         self.pyc_add_cycle_param('lp_shaft.fracLoss', 0.01)
         self.pyc_add_cycle_param('hp_shaft.HPX', 100.0, units='hp'),
-        #self.pyc_add_cycle_param('bld25.sbv:frac_W', 0.0),
         self.pyc_add_cycle_param('hpc.bld_inlet:frac_W', 0.045169),
         self.pyc_add_cycle_param('hpc.bld_inlet:frac_P', 0.5),
         self.pyc_add_cycle_param('hpc.bld_inlet:frac_work', 0.5),
@@ -465,7 +442,7 @@ class MPN3(pyc.MPCycle):
         self.pyc_add_cycle_param('byp_bld.bypBld:frac_W', 0.0),
 
         # OTHER POINTS (OFF-DESIGN)
-        self.od_pts = ['RTO','SLS','CRZ']
+        self.od_pts = ['RTO','SLS','TOC']
         self.cooling = [True, False, False]
         self.od_MNs = [0.25, 0.000001, 0.85]
         self.od_alts = [0.0, 0.0, 39000.0]
@@ -517,7 +494,6 @@ class MPN3(pyc.MPCycle):
             self.pyc_connect_des_od('splitter.Fl_O2:stat:area', 'splitter.area2')
             self.pyc_connect_des_od('duct4.Fl_O:stat:area', 'duct4.area')
             self.pyc_connect_des_od('lpc.Fl_O:stat:area', 'lpc.area')
-            #self.pyc_connect_des_od('bld25.Fl_O:stat:area', 'bld25.area')
             self.pyc_connect_des_od('duct6.Fl_O:stat:area', 'duct6.area')
             self.pyc_connect_des_od('hpc.Fl_O:stat:area', 'hpc.area')
             self.pyc_connect_des_od('bld3.Fl_O:stat:area', 'bld3.area')
@@ -536,23 +512,23 @@ class MPN3(pyc.MPCycle):
         self.pyc_connect_des_od('duct15.s_dPqP', 'duct15.s_dPqP')
 
         # Bleed Connections
-        #self.connect('RTO.hpt_chrg_cool_frac', 'TOC.bld3.bld_exit:frac_W')
-        #self.connect('RTO.hpt_nochrg_cool_frac', 'TOC.bld3.bld_inlet:frac_W')
+        #self.connect('RTO.hpt_chrg_cool_frac', 'CRZ.bld3.bld_exit:frac_W')
+        #self.connect('RTO.hpt_nochrg_cool_frac', 'CRZ.bld3.bld_inlet:frac_W')
 
         #self.connect('RTO.hpt_chrg_cool_frac', 'SLS.bld3.bld_exit:frac_W')
         #self.connect('RTO.hpt_nochrg_cool_frac', 'SLS.bld3.bld_inlet:frac_W')
 
-        #self.connect('RTO.hpt_chrg_cool_frac', 'CRZ.bld3.bld_exit:frac_W')
-        #self.connect('RTO.hpt_nochrg_cool_frac', 'CRZ.bld3.bld_inlet:frac_W')
+        #self.connect('RTO.hpt_chrg_cool_frac', 'TOC.bld3.bld_exit:frac_W')
+        #self.connect('RTO.hpt_nochrg_cool_frac', 'TOC.bld3.bld_inlet:frac_W')
 
         self.add_subsystem('T4_ratio',
-                             om.ExecComp('TOC_T4 = RTO_T4*TR',
+                             om.ExecComp('CRZ_T4 = RTO_T4*TR',
                                          RTO_T4={'val': 3380.0, 'units':'degR'},
-                                         TOC_T4={'val': 2994.5, 'units':'degR'},
+                                         CRZ_T4={'val': 2994.5, 'units':'degR'},
                                          TR={'val': 0.885946, 'units': None}), promotes_inputs=['RTO_T4',])
         #Removed Line
-        #self.connect('T4_ratio.TOC_T4', 'TOC.balance.rhs:FAR')
-        initial_order = ['T4_ratio', 'TOC', 'RTO', 'SLS', 'CRZ']
+        #self.connect('T4_ratio.CRZ_T4', 'CRZ.balance.rhs:FAR')
+        initial_order = ['T4_ratio', 'CRZ', 'RTO', 'SLS', 'TOC']
         self.set_order(self.options['order_start'] + initial_order + self.options['order_add'])
 
         # Solvers Set Up
@@ -588,15 +564,15 @@ def N3ref_model():
 
     prob.model.add_design_var('fan:PRdes', lower=1.20, upper=1.8)
     #prob.model.add_design_var('lpc:PRdes', lower=1.5, upper=4.0)
-    #prob.model.add_design_var('TOC.balance.rhs:hpc_PR', lower=40.0, upper=70.0, ref0=40.0, ref=70.0)
+    #prob.model.add_design_var('CRZ.balance.rhs:hpc_PR', lower=40.0, upper=70.0, ref0=40.0, ref=70.0)
     prob.model.add_design_var('RTO_T4', lower=3000.0, upper=3600.0, ref0=3000.0, ref=3600.0)
     prob.model.add_design_var('T4_ratio.TR', lower=0.5, upper=0.95, ref0=0.5, ref=0.95)
 
     # Comment out the objective
-    #prob.model.add_objective('TOC.perf.TSFC')
+    #prob.model.add_objective('CRZ.perf.TSFC')
 
     # to add the constraint to the model
-    prob.model.add_constraint('TOC.fan_dia.FanDia', upper=100.0, ref=100.0)
+    prob.model.add_constraint('CRZ.fan_dia.FanDia', upper=100.0, ref=100.0)
 
     return(prob)
 
@@ -609,9 +585,9 @@ if __name__ == "__main__":
     prob.setup()
 
     # Define the design point
-    prob.set_val('TOC.fc.W', 556.24, units='lbm/s')
-    prob.set_val('TOC.splitter.BPR', 11.5523),
-    prob.set_val('TOC.balance.rhs:hpc_PR', 46.088)
+    prob.set_val('CRZ.fc.W', 556.24, units='lbm/s')
+    prob.set_val('CRZ.splitter.BPR', 11.5523),
+    prob.set_val('CRZ.balance.rhs:hpc_PR', 46.088)
 
     # Set up the specific cycle parameters
     prob.set_val('fan:PRdes', 1.52),
@@ -619,16 +595,16 @@ if __name__ == "__main__":
     prob.set_val('T4_ratio.TR', 0.926470588)
     prob.set_val('RTO_T4', 3380.0, units='degR')
     prob.set_val('SLS.balance.rhs:FAR', 33110 , units='lbf') 
-    prob.set_val('CRZ.balance.rhs:FAR', 5800, units='lbf')
+    prob.set_val('TOC.balance.rhs:FAR', 5800, units='lbf')
     prob.set_val('RTO.hpt_cooling.x_factor', 0.9)
 
     # Set initial guesses for balances
 
-    #prob['TOC.balance.FAR'] = 0.02672
-    prob['TOC.balance.lpt_PR'] = 8.981
-    prob['TOC.balance.hpt_PR'] = 3.964
-    prob['TOC.fc.balance.Pt'] = 5.166
-    prob['TOC.fc.balance.Tt'] = 441.74
+    #prob['CRZ.balance.FAR'] = 0.02672
+    prob['CRZ.balance.lpt_PR'] = 8.981
+    prob['CRZ.balance.hpt_PR'] = 3.964
+    prob['CRZ.fc.balance.Pt'] = 5.166
+    prob['CRZ.fc.balance.Tt'] = 441.74
 
     FAR_guess = [0.03090, 0.03103, 0.02809]
     W_guess = [1286.29, 1212.70, 492.08]
@@ -665,7 +641,7 @@ if __name__ == "__main__":
     prob.set_solver_print(level=2, depth=1)
     prob.run_model()
 
-    for pt in ['TOC']+prob.model.od_pts:
+    for pt in ['CRZ']+prob.model.od_pts:
         viewer(prob, pt)
 
     print("time", time.time() - st)
