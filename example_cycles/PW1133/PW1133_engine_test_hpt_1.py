@@ -387,8 +387,7 @@ class MPN3(pyc.MPCycle):
         self.set_input_defaults('CRZ.hpc.eff', 0.8819),
         self.set_input_defaults('CRZ.hpt.eff', 0.8900),
         self.set_input_defaults('CRZ.lpt.eff', 0.9110),
-        self.set_input_defaults('CRZ.hpt.PR', 3.964),
-
+        self.set_input_defaults('CRZ.hpt.PR', val = 3.964),
 
         self.set_input_defaults('CRZ.balance.rhs:fan_eff', 0.9286),
         self.set_input_defaults('CRZ.duct4.dPqP', 0.0048),
@@ -567,6 +566,8 @@ def N3ref_model():
     #prob.driver.opt_settings={'Major step limit': 0.05}
 
     prob.model.add_design_var('fan:PRdes', lower=1.20, upper=1.8)
+    #prob.model.add_design_var('hpt:PRdes', lower=1.20, upper=10)
+
     #prob.model.add_design_var('lpc:PRdes', lower=1.5, upper=4.0)
     #prob.model.add_design_var('CRZ.balance.rhs:hpc_PR', lower=40.0, upper=70.0, ref0=40.0, ref=70.0)
     prob.model.add_design_var('RTO_T4', lower=3000.0, upper=3600.0, ref0=3000.0, ref=3600.0)
