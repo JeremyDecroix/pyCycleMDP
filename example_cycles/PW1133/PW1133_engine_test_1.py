@@ -1,4 +1,5 @@
 import sys
+
 import numpy as np
 
 import openmdao.api as om
@@ -85,17 +86,24 @@ class PW1133(pyc.Cycle):
         self.connect('core_nozz.Fg', 'perf.Fg_0')
         self.connect('byp_nozz.Fg', 'perf.Fg_1')
 
-        # Physical Connections
+        # Fan-shaft connections
         self.connect('fan.trq', 'fan_shaft.trq_0')
         self.connect('gearbox.trq_out', 'fan_shaft.trq_1')
+
+        # LP-shaft connections
         self.connect('gearbox.trq_in', 'lp_shaft.trq_0')
         self.connect('lpc.trq', 'lp_shaft.trq_1')
         self.connect('lpt.trq', 'lp_shaft.trq_2')
+
+        # HP-shaft connections
         self.connect('hpc.trq', 'hp_shaft.trq_0')
         self.connect('hpt.trq', 'hp_shaft.trq_1')
+
+        #Ideally expanding flow by conneting flight condition static pressure to nozzle exhaust pressure
         self.connect('fc.Fl_O:stat:P', 'core_nozz.Ps_exhaust')
         self.connect('fc.Fl_O:stat:P', 'byp_nozz.Ps_exhaust')
 
+        # Needed?
         self.add_subsystem('ext_ratio', om.ExecComp('ER = core_V_ideal * core_Cv / ( byp_V_ideal *  byp_Cv )',
                         core_V_ideal={'val':1000.0, 'units':'ft/s'},
                         core_Cv={'val':0.98, 'units':None},
@@ -165,7 +173,7 @@ class PW1133(pyc.Cycle):
             self.connect('balance.lpt_eff', 'lpt.eff')
             self.connect('lpt.eff_poly', 'balance.lhs:lpt_eff')
 
-
+            # Needed?
             self.add_subsystem('fan_dia', om.ExecComp('FanDia = 2.0*(area/(pi*(1.0-hub_tip**2.0)))**0.5',
                             area={'val':4689, 'units':'inch**2'},
                             hub_tip={'val':0.3, 'units':None},
