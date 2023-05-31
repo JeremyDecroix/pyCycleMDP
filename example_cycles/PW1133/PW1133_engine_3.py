@@ -56,13 +56,15 @@ class PW1133(pyc.Cycle):
                            promotes_inputs=[('Nmech','HP_Nmech')])
         self.add_subsystem('bld3', pyc.BleedOut(bleed_names=['bld_inlet','bld_exit']))
         self.add_subsystem('burner', pyc.Combustor(fuel_type=FUEL_TYPE))
-        self.add_subsystem('hpt', pyc.Turbine(map_data=HPTMap, map_extrap=True,
+        hpt = self.add_subsystem('hpt', pyc.Turbine(map_data=HPTMap, map_extrap=True,
                                               bleed_names=['bld_inlet','bld_exit']),
                            promotes_inputs=[('Nmech','HP_Nmech')])
+        hpt.set_input_defaults('PR', val=3.964)
         self.add_subsystem('duct11', pyc.Duct(expMN=2.0, ))
-        self.add_subsystem('lpt', pyc.Turbine(map_data=LPTMap, map_extrap=True,
-                                              bleed_names=['bld_inlet','bld_exit']),
+        lpt = self.add_subsystem('lpt', pyc.Turbine(map_data=LPTMap, map_extrap=True,
+                                              bleed_names=['bld_inlet','bld_exit']),                                    
                            promotes_inputs=[('Nmech','LP_Nmech')])
+        lpt.set_input_defaults('PR', val=8.981) 
         self.add_subsystem('duct13', pyc.Duct(expMN=2.0, ))
         self.add_subsystem('core_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', ))
 
@@ -129,14 +131,14 @@ class PW1133(pyc.Cycle):
             #self.connect('burner.Fl_O:tot:T', 'balance.lhs:FAR')
 
             # Finds Low Pressure Turbine Pressure Ratio through a net power of zero (pwr_net) on the low pressure shaft (lp_shaft)
-            balance.add_balance('lpt_PR', val=8.981, lower=1.001, upper=20, eq_units='hp', rhs_val=0., res_ref=1e4)
-            self.connect('balance.lpt_PR', 'lpt.PR')
-            self.connect('lp_shaft.pwr_net', 'balance.lhs:lpt_PR')
+            #balance.add_balance('lpt_PR', val=8.981, lower=1.001, upper=20, eq_units='hp', rhs_val=0., res_ref=1e4)
+            #self.connect('balance.lpt_PR', 'lpt.PR')
+            #self.connect('lp_shaft.pwr_net', 'balance.lhs:lpt_PR')
 
             # Finds High Pressure Turbine Pressure Ratio through a net power of zero (pwr_net) on the high pressure shaft (hp_shaft)
-            balance.add_balance('hpt_PR', val=3.964, lower=1.001, upper=8, eq_units='hp', rhs_val=0., res_ref=1e4)
-            self.connect('balance.hpt_PR', 'hpt.PR')
-            self.connect('hp_shaft.pwr_net', 'balance.lhs:hpt_PR')
+            #balance.add_balance('hpt_PR', val=3.964, lower=1.001, upper=8, eq_units='hp', rhs_val=0., res_ref=1e4)
+            #self.connect('balance.hpt_PR', 'hpt.PR')
+            #self.connect('hp_shaft.pwr_net', 'balance.lhs:hpt_PR')
 
             # Finds the base torque in the gearbox (gearbox.trq_base) that results in a net power of zero (pwr_net) on the fan shaft (fan_shaft)
             balance.add_balance('gb_trq', val=23928.0, units='ft*lbf', eq_units='hp', rhs_val=0., res_ref=1e4)
@@ -382,7 +384,7 @@ class MPPW1133(pyc.MPCycle):
 
         # CRZ POINT (DESIGN)
         self.pyc_add_pnt('CRZ', PW1133(), promotes_inputs=[('fan.PR', 'fan:PRdes'), ('lpc.PR', 'lpc:PRdes'), 
-                                                        ('opr_calc.FPR', 'fan:PRdes'), ('opr_calc.LPCPR', 'lpc:PRdes')])
+                                                        ('opr_calc.FPR', 'fan:PRdes'), ('opr_calc.LPCPR', 'lpc:PRdes'), ('hpt.PR', 'hpt:PRdes'), ('lpt.PR', 'lpt:PRdes')])
 
         # POINT 1: Cruise (CRZ)
         self.set_input_defaults('CRZ.fc.alt', 35000., units='ft'),
@@ -397,9 +399,9 @@ class MPPW1133(pyc.MPCycle):
         self.set_input_defaults('CRZ.duct4.dPqP', 0.0048),
         self.set_input_defaults('CRZ.balance.rhs:lpc_eff', 0.9150),
         self.set_input_defaults('CRZ.duct6.dPqP', 0.0101),
-        self.set_input_defaults('CRZ.balance.rhs:hpt_eff', 0.8734),
+        self.set_input_defaults('CRZ.balance.rhs:hpt_eff', 0.8734), #modified
         self.set_input_defaults('CRZ.duct11.dPqP', 0.0051),
-        self.set_input_defaults('CRZ.balance.rhs:lpt_eff', 0.8854),
+        self.set_input_defaults('CRZ.balance.rhs:lpt_eff', 0.8854), #modified
         self.set_input_defaults('CRZ.duct13.dPqP', 0.0107),
         self.set_input_defaults('CRZ.duct15.dPqP', 0.0136),
         self.set_input_defaults('CRZ.Fan_Nmech', 1559, units='rpm'),
@@ -407,22 +409,22 @@ class MPPW1133(pyc.MPCycle):
         self.set_input_defaults('CRZ.HP_Nmech', 13500, units='rpm'),
         
         # Air Stream Velocity
-        self.set_input_defaults('CRZ.inlet.MN', 0.63),
-        self.set_input_defaults('CRZ.fan.MN', 0.45)
-        self.set_input_defaults('CRZ.splitter.MN1', 0.45)
-        self.set_input_defaults('CRZ.splitter.MN2', 0.45)
-        self.set_input_defaults('CRZ.duct4.MN', 0.4),
-        self.set_input_defaults('CRZ.lpc.MN', 0.4),
-        self.set_input_defaults('CRZ.duct6.MN', 0.4),
-        self.set_input_defaults('CRZ.hpc.MN', 0.30),
-        self.set_input_defaults('CRZ.bld3.MN', 0.30)
-        self.set_input_defaults('CRZ.burner.MN', 0.10),
-        self.set_input_defaults('CRZ.hpt.MN', 0.30),
-        self.set_input_defaults('CRZ.duct11.MN', 0.30),
-        self.set_input_defaults('CRZ.lpt.MN', 0.35),
-        self.set_input_defaults('CRZ.duct13.MN', 0.25),
-        self.set_input_defaults('CRZ.byp_bld.MN', 0.45),
-        self.set_input_defaults('CRZ.duct15.MN', 0.45),
+        self.set_input_defaults('CRZ.inlet.MN', 0.6757),
+        self.set_input_defaults('CRZ.fan.MN', 0.4108)
+        self.set_input_defaults('CRZ.splitter.MN1', 0.3098)
+        self.set_input_defaults('CRZ.splitter.MN2', 0.4231)
+        self.set_input_defaults('CRZ.duct4.MN', 0.3115),
+        self.set_input_defaults('CRZ.lpc.MN', 0.2665),
+        self.set_input_defaults('CRZ.duct6.MN', 0.3563),
+        self.set_input_defaults('CRZ.hpc.MN', 0.1801),
+        self.set_input_defaults('CRZ.bld3.MN', 0.1801)
+        self.set_input_defaults('CRZ.burner.MN', 0.0754),
+        self.set_input_defaults('CRZ.hpt.MN', 0.3650),
+        self.set_input_defaults('CRZ.duct11.MN', 0.3819),
+        self.set_input_defaults('CRZ.lpt.MN', 0.5000),
+        self.set_input_defaults('CRZ.duct13.MN', 0.5466),
+        self.set_input_defaults('CRZ.byp_bld.MN', 0.4231),
+        self.set_input_defaults('CRZ.duct15.MN', 0.4304),
 
         # Bleed Mass Flow, Pressure Drop, Work Fraction
         self.pyc_add_cycle_param('burner.dPqP', 0.025),
@@ -598,6 +600,8 @@ if __name__ == "__main__":
     # Set up the specific cycle parameters
     prob.set_val('fan:PRdes', 1.52),
     prob.set_val('lpc:PRdes', 2.246),
+    prob.set_val('hpt:PRdes', 3.963),
+    prob.set_val('lpt:PRdes', 8.981),
     prob.set_val('T4_ratio.TR', 0.926470588)
     prob.set_val('RTO_T4', 3380.0, units='degR')
     prob.set_val('SLS.balance.rhs:FAR', 33110 , units='lbf') 
@@ -607,8 +611,8 @@ if __name__ == "__main__":
     # Set initial guesses for balances
 
     #prob['CRZ.balance.FAR'] = 0.02672
-    prob['CRZ.balance.lpt_PR'] = 8.981
-    prob['CRZ.balance.hpt_PR'] = 3.964
+    #prob['CRZ.balance.lpt_PR'] = 8.981
+    #prob['CRZ.balance.hpt_PR'] = 3.964
     prob['CRZ.fc.balance.Pt'] = 5.166
     prob['CRZ.fc.balance.Tt'] = 441.74
 

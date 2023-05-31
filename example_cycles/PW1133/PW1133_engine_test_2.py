@@ -397,9 +397,9 @@ class MPPW1133(pyc.MPCycle):
         self.set_input_defaults('CRZ.duct4.dPqP', 0.0048),
         self.set_input_defaults('CRZ.balance.rhs:lpc_eff', 0.9150),
         self.set_input_defaults('CRZ.duct6.dPqP', 0.0101),
-        self.set_input_defaults('CRZ.balance.rhs:hpt_eff', 0.8734),
+        self.set_input_defaults('CRZ.balance.rhs:hpt_eff', 0.8484), #modified
         self.set_input_defaults('CRZ.duct11.dPqP', 0.0051),
-        self.set_input_defaults('CRZ.balance.rhs:lpt_eff', 0.8854),
+        self.set_input_defaults('CRZ.balance.rhs:lpt_eff', 0.838), #modified
         self.set_input_defaults('CRZ.duct13.dPqP', 0.0107),
         self.set_input_defaults('CRZ.duct15.dPqP', 0.0136),
         self.set_input_defaults('CRZ.Fan_Nmech', 1559, units='rpm'),
